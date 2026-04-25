@@ -56,12 +56,26 @@
             margin-bottom: 6px;
         }
 
-        .domain-subtitle {
+        .access-line {
             text-align: center;
-            font-size: 1rem;
-            color: #a0a0cc;
-            margin-bottom: 12px;
+            font-size: 0.95rem;
+            color: #b0b0dd;
+            margin-top: 16px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(6px);
+            border-radius: 30px;
+            border: 1px dashed rgba(255, 255, 255, 0.2);
             word-break: break-all;
+            display: inline-block;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .access-line span {
+            color: #ffd966;
+            font-weight: 600;
         }
 
         h2 {
@@ -242,6 +256,9 @@
             <a href="#games">🎮 Игры</a>
             <a href="#info">🐱 Кто такие</a>
         </nav>
+        <div class="access-line">
+            🔒 Доступ с белых списков в РФ: <span>yandex-server.catgroup.dpdns.org</span>
+        </div>
     </div>
 
     <!-- ИГРЫ -->
