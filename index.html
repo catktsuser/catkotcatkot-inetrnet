@@ -137,7 +137,7 @@
     <h2>🐭 16 кошачьих игр (все рабочие)</h2>
     <div class="game-container">
 
-        <!-- 1. Поймай мышь (ФИКС) -->
+        <!-- 1. Поймай мышь (фикс) -->
         <div class="game-box">
             <h3>🐁 Поймай мышь</h3>
             <div class="score">Поймано: <span id="catch-score">0</span></div>
@@ -157,7 +157,7 @@
             <div class="memory-grid" id="memory-grid"></div>
         </div>
 
-        <!-- 3. Лазерная указка (ФИКС) -->
+        <!-- 3. Лазерная указка (фикс) -->
         <div class="game-box">
             <h3>🔴 Лазерная указка</h3>
             <div class="score">Поймано: <span id="laser-score">0</span></div>
@@ -296,7 +296,7 @@
 
 <script>
 (function(){
-    // ========== 1. ПОЙМАЙ МЫШЬ (ФИКС) ==========
+    // ========== 1. ПОЙМАЙ МЫШЬ (фикс) ==========
     const mouseEl = document.getElementById('mouse');
     const mouseArea = document.getElementById('mouse-area');
     const catchScoreSpan = document.getElementById('catch-score');
@@ -304,7 +304,7 @@
 
     function moveMouse(){
         const rect = mouseArea.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return; // защита
+        if (rect.width === 0 || rect.height === 0) return;
         const maxX = rect.width - 50;
         const maxY = rect.height - 50;
         mouseEl.style.left = Math.min(maxX, Math.max(0, Math.random() * maxX)) + 'px';
@@ -324,11 +324,7 @@
         moveMouse();
     });
 
-    // Ресайз-обработчик для мыши
-    window.addEventListener('resize', () => {
-        moveMouse();
-    });
-
+    window.addEventListener('resize', moveMouse);
     moveMouse();
 
     // ========== 2. МЕМОРИ ==========
@@ -381,7 +377,7 @@
     document.getElementById('reset-memory').addEventListener('click', createMemoryBoard);
     createMemoryBoard();
 
-    // ========== 3. ЛАЗЕРНАЯ УКАЗКА (ФИКС) ==========
+    // ========== 3. ЛАЗЕРНАЯ УКАЗКА (фикс) ==========
     const laserDot = document.getElementById('laser-dot');
     const laserArea = document.getElementById('laser-area');
     const laserScoreSpan = document.getElementById('laser-score');
@@ -400,7 +396,6 @@
         e.stopPropagation();
         laserScore++;
         laserScoreSpan.textContent = laserScore;
-        // микро-анимация (изменение цвета)
         laserDot.style.transform = 'scale(0.8)';
         setTimeout(() => { laserDot.style.transform = ''; }, 100);
         moveLaser();
@@ -412,16 +407,483 @@
         moveLaser();
     });
 
-    window.addEventListener('resize', () => {
-        moveLaser();
-    });
-
+    window.addEventListener('resize', moveLaser);
     moveLaser();
 
-    // Остальные игры (4-16) без изменений, те же, что и раньше
-    // ... (вставьте оставшийся код из предыдущего ответа, но для краткости здесь опущен)
-    // При необходимости запросите полный код, я предоставлю его отдельно.
-    // В финальной версии все 16 игр будут работать как прежде.
+    // ========== 4. ВИКТОРИНА ==========
+    const quizData=[
+        {q:"Сколько пальцев у кошки на передних лапах?",opt:["4","5","6"],cor:1},
+        {q:"Правда ли, что кошки мурлыкают только на вдохе?",opt:["Да","Нет"],cor:1},
+        {q:"Кто крупнее: тигр или лев?",opt:["Тигр","Лев"],cor:0},
+        {q:"Сколько часов спит кошка?",opt:["8-10","12-16","18-20"],cor:1}
+    ];
+    let curQ=0, quizScore=0;
+    const quizQ=document.getElementById('quiz-question');
+    const quizOpt=document.getElementById('quiz-options');
+    const quizSc=document.getElementById('quiz-score');
+    const quizRestart=document.getElementById('quiz-restart');
+    function startQuiz(){
+        curQ=0; quizScore=0; quizSc.textContent='0';
+        quizRestart.style.display='none'; showQ();
+    }
+    function showQ(){
+        if(curQ>=quizData.length){
+            quizQ.textContent=`🎉 Викторина окончена! Правильных: ${quizScore} из ${quizData.length}`;
+            quizOpt.innerHTML=''; quizRestart.style.display='inline-block'; return;
+        }
+        const q=quizData[curQ];
+        quizQ.textContent=`Вопрос ${curQ+1}/${quizData.length}: ${q.q}`;
+        quizOpt.innerHTML='';
+        q.opt.forEach((o,i)=>{
+            const btn=document.createElement('div');
+            btn.className='quiz-option';
+            btn.textContent=o;
+            btn.addEventListener('click',()=>{
+                if(i===q.cor){ quizScore++; quizSc.textContent=quizScore; }
+                curQ++; showQ();
+            });
+            quizOpt.appendChild(btn);
+        });
+    }
+    quizRestart.addEventListener('click', startQuiz);
+    startQuiz();
+
+    // ========== 5. ТИР ==========
+    const shootingArea = document.getElementById('shooting-area');
+    const shootScoreSpan = document.getElementById('shoot-score');
+    let shootScore = 0, mice = [], shootSpawnInterval;
+    function spawnMouse(){
+        const d = document.createElement('div'); d.className='mouse-target'; d.textContent='🐁';
+        const sz=40;
+        const startX = Math.random()<0.5 ? 0 : shootingArea.clientWidth - sz;
+        const startY = Math.random()*(shootingArea.clientHeight - sz);
+        d.style.left = startX+'px'; d.style.top = startY+'px';
+        const spX = (startX===0?1:-1)*(1+Math.random()*2);
+        const spY = (Math.random()-0.5)*2;
+        const obj = {el:d, x:startX, y:startY, spX, spY, sz};
+        d.addEventListener('click',(e)=>{
+            e.stopPropagation();
+            shootScore++; shootScoreSpan.textContent = shootScore;
+            obj.el.remove(); mice = mice.filter(m=>m!==obj);
+        });
+        shootingArea.appendChild(d); mice.push(obj);
+        setTimeout(()=>{
+            if(obj.el.parentNode){ obj.el.remove(); mice = mice.filter(m=>m!==obj); }
+        }, 6000);
+    }
+    function updateMice(){
+        if(!shootingArea.isConnected) return;
+        const r = shootingArea.getBoundingClientRect();
+        mice.forEach(m=>{
+            m.x += m.spX; m.y += m.spY;
+            if(m.x<0 || m.x>r.width-m.sz) m.spX*=-1;
+            if(m.y<0 || m.y>r.height-m.sz) m.spY*=-1;
+            m.el.style.left = m.x+'px';
+            m.el.style.top = m.y+'px';
+        });
+        requestAnimationFrame(updateMice);
+    }
+    function resetShootingGame(){
+        clearInterval(shootSpawnInterval);
+        mice.forEach(m=>m.el.remove()); mice = [];
+        shootScore=0; shootScoreSpan.textContent='0';
+        shootSpawnInterval = setInterval(spawnMouse, 1200);
+    }
+    document.getElementById('reset-shoot').addEventListener('click', resetShootingGame);
+    shootSpawnInterval = setInterval(spawnMouse, 1200);
+    updateMice();
+
+    // ========== 6. РЕАКЦИЯ «МЯУ!» ==========
+    const reactionCat = document.getElementById('reaction-cat');
+    const reactionScoreSpan = document.getElementById('reaction-score');
+    let reactionScore = 0, isMewing = false, meowTimeout, reactionTimeout;
+    function startMeowing(){
+        clearTimeout(meowTimeout);
+        const delay = 1500 + Math.random()*3000;
+        meowTimeout = setTimeout(()=>{
+            isMewing = true;
+            reactionCat.textContent = '🐱💬';
+            reactionCat.classList.add('active');
+            reactionTimeout = setTimeout(()=>{
+                isMewing = false;
+                reactionCat.textContent = '🐱';
+                reactionCat.classList.remove('active');
+                startMeowing();
+            }, 1000);
+        }, delay);
+    }
+    reactionCat.addEventListener('click', ()=>{
+        if(isMewing){
+            reactionScore++;
+            reactionScoreSpan.textContent = reactionScore;
+            isMewing = false;
+            reactionCat.textContent = '🐱';
+            reactionCat.classList.remove('active');
+            clearTimeout(reactionTimeout);
+            startMeowing();
+        }
+    });
+    function resetReactionGame(){
+        clearTimeout(meowTimeout);
+        clearTimeout(reactionTimeout);
+        reactionScore = 0; reactionScoreSpan.textContent = '0';
+        isMewing = false;
+        reactionCat.textContent = '🐱';
+        reactionCat.classList.remove('active');
+        startMeowing();
+    }
+    document.getElementById('reset-reaction').addEventListener('click', resetReactionGame);
+    startMeowing();
+
+    // ========== 7. РЫБАЛКА ==========
+    const fishArea = document.getElementById('fish-area');
+    const fishScoreSpan = document.getElementById('fish-score');
+    let fishScore = 0, fishList = [], fishSpawnInterval;
+    function createFish(){
+        const f = document.createElement('div');
+        f.style.position='absolute'; f.style.fontSize='2rem'; f.textContent='🐟';
+        const fw=30;
+        const sx = Math.random()*(fishArea.clientWidth-fw);
+        const sy = Math.random()*(fishArea.clientHeight-fw);
+        f.style.left = sx+'px'; f.style.top = sy+'px';
+        const spX = (Math.random()-0.5)*2, spY = (Math.random()-0.5)*2;
+        const obj = {el:f, x:sx, y:sy, spX, spY};
+        f.addEventListener('click',(e)=>{
+            e.stopPropagation();
+            fishScore++; fishScoreSpan.textContent = fishScore;
+            obj.el.remove(); fishList = fishList.filter(fi=>fi!==obj);
+        });
+        fishArea.appendChild(f); fishList.push(obj);
+        setTimeout(()=>{
+            if(obj.el.parentNode){ obj.el.remove(); fishList = fishList.filter(fi=>fi!==obj); }
+        }, 8000);
+    }
+    function updateFish(){
+        if(!fishArea.isConnected) return;
+        const r = fishArea.getBoundingClientRect();
+        fishList.forEach(f=>{
+            f.x += f.spX; f.y += f.spY;
+            if(f.x<0 || f.x>r.width-30) f.spX*=-1;
+            if(f.y<0 || f.y>r.height-30) f.spY*=-1;
+            f.el.style.left = f.x+'px';
+            f.el.style.top = f.y+'px';
+        });
+        requestAnimationFrame(updateFish);
+    }
+    function resetFishGame(){
+        clearInterval(fishSpawnInterval);
+        fishList.forEach(f=>f.el.remove()); fishList = [];
+        fishScore=0; fishScoreSpan.textContent='0';
+        fishSpawnInterval = setInterval(createFish, 1500);
+    }
+    document.getElementById('reset-fish').addEventListener('click', resetFishGame);
+    fishSpawnInterval = setInterval(createFish, 1500);
+    updateFish();
+
+    // ========== 8. НОРКИ ==========
+    const burrowArea = document.getElementById('burrow-area');
+    const burrowScoreSpan = document.getElementById('burrow-score');
+    let burrowScore = 0, activeBurrow = null, burrowTimeout;
+    const burrows = [];
+    for(let i=0;i<6;i++){
+        const b = document.createElement('div');
+        b.style.fontSize='2rem'; b.style.padding='10px'; b.style.margin='5px';
+        b.textContent = '🕳️';
+        b.addEventListener('click', ()=>{
+            if(b === activeBurrow){
+                burrowScore++; burrowScoreSpan.textContent = burrowScore;
+                b.textContent = '🕳️'; activeBurrow = null;
+                clearTimeout(burrowTimeout);
+                burrowTimeout = setTimeout(activateRandomBurrow, 800);
+            }
+        });
+        burrowArea.appendChild(b);
+        burrows.push(b);
+    }
+    function activateRandomBurrow(){
+        if(activeBurrow) activeBurrow.textContent = '🕳️';
+        const idx = Math.floor(Math.random()*burrows.length);
+        burrows[idx].textContent = '🐭';
+        activeBurrow = burrows[idx];
+    }
+    function resetBurrowGame(){
+        clearTimeout(burrowTimeout);
+        burrowScore = 0; burrowScoreSpan.textContent = '0';
+        if(activeBurrow) activeBurrow.textContent = '🕳️';
+        activeBurrow = null;
+        burrowTimeout = setTimeout(activateRandomBurrow, 500);
+    }
+    document.getElementById('reset-burrow').addEventListener('click', resetBurrowGame);
+    burrowTimeout = setTimeout(activateRandomBurrow, 800);
+
+    // ========== 9. КОРОБКА ==========
+    const boxGame = document.getElementById('box-game');
+    const boxScoreSpan = document.getElementById('box-score');
+    let boxScore = 0, boxOpened = false;
+    const toys = ['🐭','🧶','🐟','🐦','🪀','🎾','🧸'];
+    boxGame.addEventListener('click', ()=>{
+        if(!boxOpened){
+            boxGame.textContent = '🎁';
+            boxOpened = true;
+            const toy = toys[Math.floor(Math.random()*toys.length)];
+            boxScore++;
+            boxScoreSpan.textContent = boxScore;
+            setTimeout(()=>{ boxGame.textContent = toy; },300);
+        }
+    });
+    document.getElementById('reset-box').addEventListener('click', ()=>{
+        boxGame.textContent = '📦';
+        boxOpened = false;
+    });
+
+    // ========== 10. СУПЕР-КОТ (кликер) ==========
+    const speedCat = document.getElementById('speed-cat');
+    const speedScoreSpan = document.getElementById('speed-score');
+    const speedTimerSpan = document.getElementById('speed-timer');
+    let speedScore = 0, speedTime = 5, speedActive = false, speedInterval;
+    function startSpeedGame(){
+        if(speedActive) return;
+        speedActive = true;
+        speedScore = 0; speedTime = 5;
+        speedScoreSpan.textContent = '0'; speedTimerSpan.textContent = '5';
+        speedInterval = setInterval(()=>{
+            speedTime--;
+            speedTimerSpan.textContent = speedTime;
+            if(speedTime <= 0){
+                clearInterval(speedInterval);
+                speedActive = false;
+                alert(`Кликов: ${speedScore}`);
+            }
+        },1000);
+    }
+    speedCat.addEventListener('click', ()=>{
+        if(speedActive){ speedScore++; speedScoreSpan.textContent = speedScore; }
+    });
+    document.getElementById('start-speed').addEventListener('click', startSpeedGame);
+
+    // ========== 11. БЕГ КОТЁНКА ==========
+    const runProgress = document.getElementById('run-progress');
+    const runScoreSpan = document.getElementById('run-score');
+    let runDistance = 0, runInterval, runActive = false;
+    function startRun(){
+        if(runActive) return;
+        runActive = true;
+        runInterval = setInterval(()=>{
+            runDistance += 0.5;
+            runScoreSpan.textContent = Math.floor(runDistance);
+            runProgress.style.width = Math.min(100, (runDistance % 100)) + '%';
+        }, 100);
+    }
+    document.addEventListener('click', (e)=>{
+        if(runActive && (e.target.closest('#games') || e.target.closest('#run-progress'))){
+            runDistance += 2;
+        }
+    });
+    function resetRunGame(){
+        clearInterval(runInterval);
+        runActive = false;
+        runDistance = 0;
+        runScoreSpan.textContent = '0';
+        runProgress.style.width = '0%';
+    }
+    document.getElementById('reset-run').addEventListener('click', resetRunGame);
+    startRun();
+
+    // ========== 12. КЛУБОК ==========
+    const ballGame = document.getElementById('ball-game');
+    const ballScoreSpan = document.getElementById('ball-score');
+    let ballScore = 0, ballObj = null, ballSpawnInterval;
+    function spawnBall(){
+        if(ballObj && ballObj.el.parentNode) return;
+        const b = document.createElement('div');
+        b.style.position='absolute'; b.style.fontSize='2.5rem'; b.textContent='🧶';
+        const bx = Math.random()*(ballGame.clientWidth-40);
+        const by = Math.random()*(ballGame.clientHeight-40);
+        b.style.left = bx+'px'; b.style.top = by+'px';
+        b.addEventListener('click',(e)=>{
+            e.stopPropagation();
+            ballScore++; ballScoreSpan.textContent = ballScore;
+            b.remove(); ballObj = null;
+        });
+        ballGame.appendChild(b);
+        ballObj = {el:b, x:bx, y:by};
+    }
+    function resetBallGame(){
+        clearInterval(ballSpawnInterval);
+        if(ballObj && ballObj.el.parentNode) ballObj.el.remove();
+        ballObj = null;
+        ballScore = 0; ballScoreSpan.textContent = '0';
+        ballSpawnInterval = setInterval(spawnBall, 2000);
+    }
+    document.getElementById('reset-ball').addEventListener('click', resetBallGame);
+    ballSpawnInterval = setInterval(spawnBall, 2000);
+    spawnBall();
+
+    // ========== 13. ЗВОНОЧЕК ==========
+    const bellArea = document.getElementById('bell-area');
+    const bellScoreSpan = document.getElementById('bell-score');
+    let bellScore = 0, bellVisible = false, bellTimeout;
+    function showBell(){
+        clearTimeout(bellTimeout);
+        bellArea.innerHTML = '🔔';
+        bellVisible = true;
+        bellTimeout = setTimeout(()=>{
+            if(bellVisible){
+                bellArea.innerHTML = '🐱💤';
+                bellVisible = false;
+                showBell();
+            }
+        },2000);
+    }
+    bellArea.addEventListener('click', ()=>{
+        if(bellVisible){
+            bellScore++; bellScoreSpan.textContent = bellScore;
+            clearTimeout(bellTimeout);
+            bellArea.innerHTML = '🐱💤';
+            bellVisible = false;
+            showBell();
+        }
+    });
+    function resetBellGame(){
+        clearTimeout(bellTimeout);
+        bellScore = 0; bellScoreSpan.textContent = '0';
+        bellVisible = false;
+        bellArea.innerHTML = '🐱💤';
+        showBell();
+    }
+    document.getElementById('reset-bell').addEventListener('click', resetBellGame);
+    showBell();
+
+    // ========== 14. СПАСИ ПТИЧКУ ==========
+    const birdEl = document.getElementById('bird');
+    const catChase = document.getElementById('cat-chase');
+    const birdAreaDiv = document.getElementById('bird-area');
+    const birdScoreSpan = document.getElementById('bird-score');
+    let birdScore = 0, birdX = 50, birdY = 50, catX = 200, catY = 50, gameOverBird = false;
+    let birdAnimId;
+    function moveBird(){
+        if(!birdAreaDiv.isConnected) return;
+        birdX += Math.random()*4 - 2;
+        birdY += Math.random()*4 - 2;
+        birdX = Math.max(10, Math.min(birdAreaDiv.clientWidth-40, birdX));
+        birdY = Math.max(10, Math.min(birdAreaDiv.clientHeight-40, birdY));
+        birdEl.style.left = birdX+'px';
+        birdEl.style.top = birdY+'px';
+        const dx = birdX - catX, dy = birdY - catY;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        if(dist < 5) return;
+        catX += dx * 0.03;
+        catY += dy * 0.03;
+        catChase.style.left = catX+'px';
+        catChase.style.top = catY+'px';
+        if(dist < 40 && !gameOverBird){
+            endBirdGame();
+        } else {
+            birdAnimId = requestAnimationFrame(moveBird);
+        }
+    }
+    function endBirdGame(){
+        gameOverBird = true;
+        cancelAnimationFrame(birdAnimId);
+        alert('Птичка поймана! Нажми Сбросить');
+        birdEl.style.display = 'none';
+        catChase.textContent = '😿';
+    }
+    birdEl.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        birdScore++; birdScoreSpan.textContent = birdScore;
+    });
+    function resetBirdGame(){
+        cancelAnimationFrame(birdAnimId);
+        gameOverBird = false;
+        birdEl.style.display = 'block';
+        catChase.textContent = '🐱';
+        birdX = 50; birdY = 50;
+        catX = 200; catY = 50;
+        birdEl.style.left = birdX+'px';
+        birdEl.style.top = birdY+'px';
+        catChase.style.left = catX+'px';
+        catChase.style.top = catY+'px';
+        birdAnimId = requestAnimationFrame(moveBird);
+    }
+    document.getElementById('reset-bird').addEventListener('click', resetBirdGame);
+    birdAnimId = requestAnimationFrame(moveBird);
+
+    // ========== 15. ФОТООХОТА ==========
+    const photoArea = document.getElementById('photo-area');
+    const photoScoreSpan = document.getElementById('photo-score');
+    let photoScore = 0, photoAnimals = [], photoSpawnInterval;
+    const animals = ['🐱','🐈','🐆','🐅','🦁','🐯'];
+    function spawnAnimal(){
+        const a = document.createElement('div');
+        a.style.position='absolute'; a.style.fontSize='2.5rem';
+        a.textContent = animals[Math.floor(Math.random()*animals.length)];
+        const ax = Math.random()*(photoArea.clientWidth-40);
+        const ay = Math.random()*(photoArea.clientHeight-40);
+        a.style.left = ax+'px'; a.style.top = ay+'px';
+        a.addEventListener('click',(e)=>{
+            e.stopPropagation();
+            photoScore++; photoScoreSpan.textContent = photoScore;
+            a.remove(); photoAnimals = photoAnimals.filter(p=>p!==a);
+        });
+        photoArea.appendChild(a); photoAnimals.push(a);
+        setTimeout(()=>{
+            if(a.parentNode){ a.remove(); photoAnimals = photoAnimals.filter(p=>p!==a); }
+        },3000);
+    }
+    function resetPhotoGame(){
+        clearInterval(photoSpawnInterval);
+        photoAnimals.forEach(a=>a.remove()); photoAnimals = [];
+        photoScore = 0; photoScoreSpan.textContent = '0';
+        photoSpawnInterval = setInterval(spawnAnimal, 1200);
+    }
+    document.getElementById('reset-photo').addEventListener('click', resetPhotoGame);
+    photoSpawnInterval = setInterval(spawnAnimal, 1200);
+
+    // ========== 16. ПАЗЛ 3x3 ==========
+    const puzzleGrid = document.getElementById('puzzle-grid');
+    const puzzleMovesSpan = document.getElementById('puzzle-moves');
+    let tiles = [0,1,2,3,4,5,6,7,8]; // 0 – пустая
+    let puzzleMoves = 0;
+    function renderPuzzle(){
+        puzzleGrid.innerHTML = '';
+        tiles.forEach((v,i)=>{
+            const t = document.createElement('div');
+            t.style.background = v===0 ? 'transparent' : 'rgba(255,255,255,0.15)';
+            t.style.borderRadius = '12px';
+            t.style.display = 'flex';
+            t.style.alignItems = 'center';
+            t.style.justifyContent = 'center';
+            t.style.fontSize = '2rem';
+            t.style.aspectRatio = '1';
+            t.textContent = v===0 ? '' : String(v);
+            if(v!==0) t.addEventListener('click', ()=> moveTile(i));
+            puzzleGrid.appendChild(t);
+        });
+    }
+    function moveTile(idx){
+        const emptyIdx = tiles.indexOf(0);
+        const rowDiff = Math.abs(Math.floor(idx/3) - Math.floor(emptyIdx/3));
+        const colDiff = Math.abs(idx%3 - emptyIdx%3);
+        if((rowDiff===1 && colDiff===0) || (rowDiff===0 && colDiff===1)){
+            [tiles[idx], tiles[emptyIdx]] = [tiles[emptyIdx], tiles[idx]];
+            puzzleMoves++;
+            puzzleMovesSpan.textContent = puzzleMoves;
+            renderPuzzle();
+        }
+    }
+    function shufflePuzzle(){
+        for(let i=tiles.length-1;i>0;i--){
+            const j = Math.floor(Math.random()*(i+1));
+            [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+        }
+        puzzleMoves = 0;
+        puzzleMovesSpan.textContent = '0';
+        renderPuzzle();
+    }
+    document.getElementById('shuffle-puzzle').addEventListener('click', shufflePuzzle);
+    renderPuzzle();
+
 })();
 </script>
 </body>
