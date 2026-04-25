@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>catkotcatkot-internet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 16px 40px;
+        }
+
+        .glass {
+            background: rgba(20, 20, 30, 0.45);
+            backdrop-filter: blur(16px) saturate(140%);
+            -webkit-backdrop-filter: blur(16px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.05);
+            padding: 24px;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .glass:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 0 25px rgba(255, 255, 255, 0.08);
+        }
+
+        h1, h2, h3 {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            text-align: center;
+            background: linear-gradient(135deg, #d4a5ff, #7b9cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 12px rgba(180, 130, 255, 0.6));
+            margin-bottom: 6px;
+        }
+
+        .domain-subtitle {
+            text-align: center;
+            font-size: 1rem;
+            color: #a0a0cc;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #e0e0ff;
+            border-left: 5px solid #a78bfa;
+            padding-left: 16px;
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        nav a {
+            color: #d0d0ff;
+            text-decoration: none;
+            padding: 10px 22px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 40px;
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #b794ff;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(180, 130, 255, 0.4);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .game-box {
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 20px;
+        }
+
+        .score {
+            font-size: 1.4rem;
+            color: #ffd966;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        #mouse-area {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: rgba(10, 10, 20, 0.7);
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #mouse {
+            position: absolute;
+            font-size: 2.8rem;
+            user-select: none;
+            transition: top 0.08s, left 0.08s;
+            filter: drop-shadow(0 0 8px #aaa);
+        }
+
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .card {
+            aspect-ratio: 1 / 1;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border-radius: 18px;
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped {
+            background: rgba(200, 180, 255, 0.25);
+            border-color: #c084fc;
+            transform: rotateY(180deg);
+        }
+
+        .card.matched {
+            background: rgba(80, 200, 120, 0.3);
+            border-color: #4ade80;
+            pointer-events: none;
+            filter: drop-shadow(0 0 12px #4ade80);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 20px;
+            transition: 0.3s;
+        }
+
+        .info-card h3 {
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+            color: #c4a7ff;
+        }
+
+        .info-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        button {
+            background: rgba(150, 120, 255, 0.2);
+            border: 1px solid rgba(180, 130, 255, 0.5);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: rgba(150, 120, 255, 0.4);
+            box-shadow: 0 0 25px rgba(160, 120, 255, 0.6);
+        }
+
+        footer {
+            margin-top: 50px;
+            color: #8888aa;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 500px) {
+            .memory-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass" style="text-align: center; margin-top: 30px;">
+        <h1>🐾 catkotcatkot-internet</h1>
+        <nav>
+            <a href="#games">🎮 Игры</a>
+            <a href="#info">🐱 Кто такие</a>
+        </nav>
+    </div>
+
+    <!-- ИГРЫ -->
+    <div class="glass" id="games">
+        <h2>🐭 Кошачьи игры (рабочие)</h2>
+        <div class="game-container">
+            <!-- Игра 1: Поймай мышь -->
+            <div class="game-box">
+                <div class="score">🐾 Поймано мышей: <span id="catch-score">0</span></div>
+                <div id="mouse-area">
+                    <div id="mouse">🐁</div>
+                </div>
+                <button onclick="resetCatchGame()">Сбросить</button>
+            </div>
+
+            <!-- Игра 2: Мемори с кошками -->
+            <div class="game-box">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="score">🧠 Найдено пар: <span id="pairs-found">0</span> / 6</div>
+                    <button onclick="resetMemory()">Новая игра</button>
+                </div>
+                <div class="memory-grid" id="memory-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ИНФОРМАЦИЯ -->
+    <div class="glass" id="info">
+        <h2>🐈 Кто такие коты, кошки, тигры?</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>🐱 Домашняя кошка</h3>
+                <p><strong>Felis catus</strong> — одомашненный подвид лесной кошки. Живёт с человеком более 9 000 лет. Отличается гибкостью, ночным зрением и мурлыканьем. Самцы — коты, самки — кошки.</p>
+            </div>
+            <div class="info-card">
+                <h3>🐆 Дикие кошки</h3>
+                <p>К роду <em>Panthera</em> относятся львы, леопарды, ягуары. К роду <em>Felis</em> — барханная, степная кошки. Все они — хищники с острыми когтями и отличным слухом, но не все умеют мурлыкать.</p>
+            </div>
+            <div class="info-card">
+                <h3>🐅 Тигр</h3>
+                <p><strong>Panthera tigris</strong> — крупнейший представитель кошачьих. Полосатая шкура уникальна, как отпечатки пальцев. Обитает в Азии, находится под угрозой исчезновения. Тигры — одиночные охотники.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        🐾 catkotcatkot-internet
+    </footer>
+
+    <script>
+        // ===== ИГРА «ПОЙМАЙ МЫШЬ» =====
+        const mouse = document.getElementById('mouse');
+        const mouseArea = document.getElementById('mouse-area');
+        const catchScoreSpan = document.getElementById('catch-score');
+        let catchScore = 0;
+
+        function moveMouse() {
+            const areaRect = mouseArea.getBoundingClientRect();
+            const mouseWidth = 50;
+            const mouseHeight = 50;
+            const maxX = areaRect.width - mouseWidth;
+            const maxY = areaRect.height - mouseHeight;
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+            mouse.style.left = x + 'px';
+            mouse.style.top = y + 'px';
+        }
+
+        mouse.addEventListener('click', (e) => {
+            e.stopPropagation();
+            catchScore++;
+            catchScoreSpan.textContent = catchScore;
+            moveMouse();
+        });
+
+        mouseArea.addEventListener('click', (e) => {
+            if (e.target === mouse) return;
+        });
+
+        function resetCatchGame() {
+            catchScore = 0;
+            catchScoreSpan.textContent = '0';
+            moveMouse();
+        }
+
+        moveMouse();
+
+        // ===== ИГРА «КОШАЧЬЕ МЕМОРИ» =====
+        const symbols = ['🐱', '🐯', '🦁', '🐆', '🐈', '🐅'];
+        let cardsArray = [...symbols, ...symbols];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let lockBoard = false;
+        const memoryGrid = document.getElementById('memory-grid');
+        const pairsFoundSpan = document.getElementById('pairs-found');
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createMemoryBoard() {
+            memoryGrid.innerHTML = '';
+            cardsArray = shuffle([...symbols, ...symbols]);
+            matchedPairs = 0;
+            pairsFoundSpan.textContent = '0';
+            flippedCards = [];
+            lockBoard = false;
+
+            cardsArray.forEach((symbol, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.symbol = symbol;
+                card.dataset.index = index;
+                card.textContent = '❓';
+                card.addEventListener('click', flipCard);
+                memoryGrid.appendChild(card);
+            });
+        }
+
+        function flipCard(e) {
+            const card = e.currentTarget;
+            if (lockBoard) return;
+            if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+            if (flippedCards.length === 2) return;
+
+            card.textContent = card.dataset.symbol;
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                lockBoard = true;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const match = card1.dataset.symbol === card2.dataset.symbol;
+
+            if (match) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                pairsFoundSpan.textContent = matchedPairs;
+                flippedCards = [];
+                lockBoard = false;
+
+                if (matchedPairs === symbols.length) {
+                    setTimeout(() => alert('🎉 Все пары найдены! Мяу!'), 200);
+                }
+            } else {
+                setTimeout(() => {
+                    card1.textContent = '❓';
+                    card2.textContent = '❓';
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                    lockBoard = false;
+                }, 700);
+            }
+        }
+
+        function resetMemory() {
+            createMemoryBoard();
+        }
+
+        createMemoryBoard();
+    </script>
+</body>
+</html>
